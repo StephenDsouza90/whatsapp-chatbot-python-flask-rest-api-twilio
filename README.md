@@ -35,8 +35,11 @@ In this application the keywords are:
 
 4. calculate and +, -, / or *
 > Please calculate 100 + 100
+
 > Please calculate 100 - 100
+
 > Please calculate 100 / 100
+
 > Please calculate 100 * 100
 
 5. name
@@ -44,10 +47,12 @@ In this application the keywords are:
 
 6. order
 > I want to place an order
+
 > I want 2 boxes of brownies
+
 > I want 2 boxes of biryani
 
-Once the bot detemines the keyword, it will carry out a process and prepare a message. This message will be saved in the `message.body()` for text and `message.media` for images.
+Once the bot detemines the keyword, it will carry out a process and prepare a message. This message will be saved in the `message.body()` for text and `message.media()` for images.
 
 ### Outgoing message
 
