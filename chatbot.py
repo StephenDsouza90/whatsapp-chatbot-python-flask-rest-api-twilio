@@ -1,87 +1,101 @@
-from flask import Flask, request
 import requests
-from twilio.twiml.messaging_response import MessagingResponse
 import waitress
+from flask import Flask, request
+from twilio.twiml.messaging_response import MessagingResponse
 
 
 def create_app():
     """
-    Creates the server app.
+    Create server.
     """
+
     app = Flask("WhatsApp Chatbot")
-
-    # the application defines a /bot endpoint that listens to POST requests.
+    
     @app.route('/bot', methods=['POST'])
-    def bot():
-        """
-        The body of the function bot() is going to analyze the message sent by the user and provide the appropriate response.
-        """
-        # First obtain a message from the user. 
-        # Message comes via POST request in which Key is the "Body" and values is the "message".
-        # {"Body": "can you send me a famous quote?"}
-        # Converted the text to lowercase, so that all words can appear in a same case variations.
-        incoming_msg = request.values.get('Body', '').lower()
+    def chatbot():
+        incoming_message = request.values.get("Body").lower()
 
-        # Create a response that includes text and media components
-        resp = MessagingResponse()
-        msg = resp.message()
-        
+        outgoing_message = MessagingResponse()
+        message = outgoing_message.message()
+
         responded = False
-        if 'quote' in incoming_msg:
-            # return a quote
-            r = requests.get('https://api.quotable.io/random')
-            if r.status_code == 200:
-                data = r.json() # "values" : "{"content": "Some quote"} {"author": "author name"}"
+
+        if 'quote' in incoming_message:
+            qoute_returned = requests.get('https://api.quotable.io/random')
+            if qoute_returned.status_code == 200:
+                data = qoute_returned.json()
                 quote = f'{data["content"]} ({data["author"]})'
             else:
-                quote = 'I could not retrieve a quote at this time, sorry.'
-            msg.body(quote)
+                quote = "Quote not available at the moment. Please send a message again."
+            message.body(quote)
             responded = True
-        if 'cat' in incoming_msg:
-            # return a cat pic
-            msg.media('https://cataas.com/cat')
+
+        if 'cat' in incoming_message:
+            message.media('https://cataas.com/cat')
             responded = True
-        if 'joke' in incoming_msg:
-            r = requests.get('http://api.icndb.com/jokes/random')
-            if r.status_code == 200:
-                data = r.json()
+
+        if 'joke' in incoming_message:
+            joke_returned = requests.get('http://api.icndb.com/jokes/random')
+            if joke_returned.status_code == 200:
+                data = joke_returned.json()
                 value = data["value"]
                 joke = value["joke"]
             else:
-                joke = 'I could not retrieve a joke at this time, sorry.'
-            msg.body(joke)
+                joke = 'Joke not available at the moment. Please send a message again.'
+            message.body(joke)
             responded = True
-        if 'name' in incoming_msg:
-            name = 'My name is Stephen and I am a BOT.'
-            msg.body(name)
+
+        if 'name' in incoming_message:
+            name = 'My name is Stephen and I am a BOT. What is your name?'
+            message.body(name)
             responded = True
-        if 'calculate' in incoming_msg:
-            num = [int(num) for num in incoming_msg.split() if num.isdigit()]
+        
+        if 'calculate' in incoming_message:
+            num = [int(num) for num in incoming_message.split() if num.isdigit()]
             num1 = num[0]
             num2 = num[1]
-            if "+" in incoming_msg:
+            if "+" in incoming_message:
                 result = num1 + num2
-            elif "-" in incoming_msg:
+            elif "-" in incoming_message:
                 result = num1 - num2
-            elif "*" in incoming_msg:
+            elif "*" in incoming_message:
                 result = num1 * num2
-            elif "/" in incoming_msg:
+            elif "/" in incoming_message:
                 result = num1 / num2
-            msg.body(str(result))
+            message.body(str(result))
             responded = True
+
+        if 'order' in incoming_message:
+            order = 'What do you want to order and in what quantity? We are selling brownies and biryani (boxes).'
+            message.body(order)
+            responded = True
+        
+        if 'brownies' in incoming_message:
+            quantity = [int(q) for q in incoming_message.split() if q.isdigit()]
+            order = "Order for {} boxes of brownies confirmed! Thank you.".format(quantity)
+            message.body(order)
+            responded = True
+
+        if 'biryani' in incoming_message:
+            quantity = [int(q) for q in incoming_message.split() if q.isdigit()]
+            order = "Order for {} boxes of biryani confirmed! Thank you.".format(quantity)
+            message.body(order)
+            responded = True
+
         if not responded:
-            # return a generic response here
-            msg.body('I only share quotes, jokes, cat images, calculate(using +, -, / and *) and say my name, sorry!')
-        return str(resp)
+            message.body('Please use keywords "quote", "joke", "cat", "calculate and +, -, / or *", "name", "order"')
+
+        return str(outgoing_message)
     return app
 
 
 def main():
     """
-    Create the app.
+    Run server.
     """
     app = create_app()
     waitress.serve(app, host='0.0.0.0', port=8080)
 
 
-main()
+if __name__ == "__main__":
+    main()
